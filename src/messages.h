@@ -9,6 +9,7 @@
 #include <stdlib.h>
 
 #include "log.h"
+#include "constants.h"
 
 typedef struct blob_t {
     uint8_t *blob;
@@ -79,6 +80,7 @@ typedef struct job_t {
     blob_t header_blob;
     blob_t txs_blob;
     blob_t target;
+    int height;
 } job_t;
 
 void free_job(job_t *job) {
@@ -104,6 +106,7 @@ void free_jobs(jobs_t *jobs)
 typedef struct submit_result_t {
     int from_group;
     int to_group;
+    uint8_t block_hash[32];
     bool status;
 } submit_result_t;
 
@@ -218,6 +221,7 @@ void extract_job(uint8_t **bytes, job_t *job)
     extract_blob(bytes, &job->header_blob);
     extract_blob(bytes, &job->txs_blob);
     extract_blob(bytes, &job->target);
+    job->height = extract_size(bytes);
 }
 
 void extract_jobs(uint8_t **bytes, jobs_t *jobs)
@@ -234,10 +238,17 @@ void extract_jobs(uint8_t **bytes, jobs_t *jobs)
     }
 }
 
+void extract_block_hash(uint8_t **bytes, uint8_t *block_hash)
+{
+    memcpy(block_hash, *bytes, 32);
+    *bytes = *bytes + 32;
+}
+
 void extract_submit_result(uint8_t **bytes, submit_result_t *result)
 {
     result->from_group = extract_size(bytes);
     result->to_group = extract_size(bytes);
+    extract_block_hash(bytes, result->block_hash);
     result->status = extract_bool(bytes);
 }
 
@@ -257,6 +268,12 @@ server_message_t *decode_server_message(blob_t *blob)
     ssize_t message_byte_size = message_size + 4;
     if (len < message_byte_size) {
         return NULL; // not enough bytes for decoding
+    }
+
+    uint8_t version = extract_byte(&pos);
+    if (version != mining_protocol_version) {
+        LOG("Invalid protocol version %d, expect %d\n", version, mining_protocol_version);
+        exit(1);
     }
 
     server_message_t *server_message = (server_message_t *)malloc(sizeof(server_message_t));

@@ -7,5 +7,6 @@
 #define parallel_mining_works_per_gpu 4
 #define max_worker_num (max_gpu_num * parallel_mining_works_per_gpu)
 #define mining_steps 5000
+#define mining_protocol_version 1
 
 #endif // ALEPHIUM_CONSTANTS_H

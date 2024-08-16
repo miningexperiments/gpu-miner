@@ -273,7 +273,15 @@ void on_read(uv_stream_t *server, ssize_t nread, const uv_buf_t *buf)
             break;
 
         case SUBMIT_RESULT:
-            LOG("submitted: %d -> %d: %d \n", message->submit_result->from_group, message->submit_result->to_group, message->submit_result->status);
+            char *block_hash_hex = bytes_to_hex(message->submit_result->block_hash, 32);
+            LOG(
+                "submitted: %d -> %d, %s: %d \n",
+                message->submit_result->from_group,
+                message->submit_result->to_group,
+                block_hash_hex,
+                message->submit_result->status
+            );
+            free(block_hash_hex);
             break;
         }
         free_server_message_except_jobs(message);
