@@ -1,17 +1,17 @@
-FROM nvidia/cuda:11.0-devel-ubuntu20.04 AS builder
+FROM nvidia/cuda:11.0.3-devel-ubuntu20.04 AS builder
 
 WORKDIR /src
 
 RUN apt update && \
-    DEBIAN_FRONTEND="noninteractive" apt-get -y install cmake tzdata
+    DEBIAN_FRONTEND="noninteractive" apt-get -y install cmake tzdata curl
 
-RUN curl -L https://github.com/conan-io/conan/releases/latest/download/conan-ubuntu-64.deb -o out.deb && \
-    DEBIAN_FRONTEND=sudo apt-get -y install ./out.deb 
+RUN curl -L https://github.com/conan-io/conan/releases/download/1.65.0/conan-ubuntu-64.deb -o out.deb && \
+    DEBIAN_FRONTEND=sudo apt-get -y install ./out.deb
 
 COPY ./ ./
 RUN ./make.sh
 
-FROM nvidia/cuda:11.0-base
+FROM nvidia/cuda:11.0.3-base-ubuntu20.04
 
 RUN apt update && \
     DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
